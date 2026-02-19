@@ -2,9 +2,11 @@
 
 **Read the Douay-Rheims Bible from your terminal.**
 
-`73 Books · Vulgate Order · Public Domain`
+`73 Books · Vulgate Order · 3 Commentaries · Public Domain`
 
 A command-line tool for reading the Douay-Rheims Bible (Challoner revision) — the classic English translation of the Latin Vulgate, with all 73 books of the Catholic canon including the deuterocanonical books.
+
+Includes the **Haydock Catholic Bible Commentary** (full Bible, 35,000+ entries) with Cornelius à Lapide and 1609 Douai annotations coming soon.
 
 Inspired by [Luke Smith's kjv](https://github.com/LukeSmithxyz/kjv). Built for Catholics who live in the terminal.
 
@@ -30,7 +32,7 @@ John
 ### From source
 
 ```sh
-git clone https://github.com/CodeBlue519/drb.git
+git clone https://github.com/ecclesia-dev/drb.git
 cd drb
 make
 sudo make install
@@ -42,16 +44,6 @@ To uninstall:
 sudo make uninstall
 ```
 
-### Package managers (coming soon)
-
-```sh
-# Homebrew (planned)
-brew install yourusername/tap/drb
-
-# AUR (planned)
-yay -S drb
-```
-
 ## Usage
 
 ```
@@ -59,64 +51,50 @@ drb [flags] [reference...]
 
   -l      list books
   -r      random verse
+  -c      show Haydock commentary alongside verses
   -W      no line wrap
   -h      show help
 ```
+
+### Reading
+
+```
+$ drb Genesis 1:1              # single verse
+$ drb Wisdom 7                 # full chapter
+$ drb Romans 8:28-31           # verse range
+$ drb Romans 8-9               # chapter range
+$ drb John 3:16,17             # multiple verses
+$ drb John 1:1-2:5             # cross-chapter range
+```
+
+### Commentary
+
+Use `-c` to display the Haydock Catholic Bible Commentary below each verse:
+
+```
+$ drb -c John 1:1
+John
+1:1     In the beginning was the Word: and the Word was with God: and the Word
+        was God.
+
+        Commentary: Ver. 1. In the beginning. Before all ages: the same as
+        saying from all eternity... (Haydock)
+```
+
+The Haydock commentary covers the entire Bible (Genesis through 2 Maccabees) with over 35,000 entries drawn from the Church Fathers, Doctors of the Church, and traditional Catholic exegesis.
 
 ### Random verse
 
 ```
 $ drb -r
-Sirach
-40:17   Grace is like a paradise in blessings, and mercy remaineth for ever.
-```
-
-### Single verse
-
-```
-$ drb Genesis 1:1
-Genesis
-1:1     In the beginning God created heaven, and earth.
-```
-
-### Full chapter
-
-```
-$ drb Wisdom 7
-```
-
-### Verse range
-
-```
-$ drb Romans 8:28-31
-```
-
-### Chapter range
-
-```
-$ drb Romans 8-9
-```
-
-### Multiple verses
-
-```
-$ drb John 3:16,17
-```
-
-### Cross-chapter range
-
-```
-$ drb John 1:1-2:5
 ```
 
 ### Deuterocanonical books
 
+All seven deuterocanonical books are included:
+
 ```
 $ drb Wisdom 7:26
-Wisdom
-7:26    For she is the brightness of eternal light, and the unspotted mirror of
-        God's majesty, and the image of his goodness.
-
 $ drb Sirach 1:1-5
 $ drb Tobit 1
 $ drb 1 Maccabees 1
@@ -126,26 +104,16 @@ $ drb Baruch 3
 ### Search with regex
 
 ```
-$ drb /grace
-Genesis
-6:8     But Noe found grace before the Lord.
-...
-
-$ drb John /bread of life
-$ drb Psalms /mercy
+$ drb /grace                          # search whole Bible
+$ drb John /bread of life             # search one book
+$ drb Psalms /mercy                   # search Psalms
 ```
 
 ### Piping
 
 ```sh
-# Count verses mentioning "love" in 1 Corinthians
-drb 1 Corinthians /love | grep -c "^"
-
-# Extract just the text
-drb John 1:1 | cut -f2
-
-# Send a verse to a friend
-drb Philippians 4:13 | mail -s "Daily verse" friend@example.com
+drb 1 Corinthians /love | grep -c "^"    # count matching verses
+drb John 1:1 | cut -f2                    # extract text only
 ```
 
 ### Interactive mode
@@ -157,38 +125,29 @@ $ drb
 drb> John 1:1
 drb> /love one another
 drb> Wisdom 7
-drb> Psalms 51:3-5
 ```
 
-## ⚠️ A Note on Psalm Numbering
+## Commentary Sources
 
-The Douay-Rheims Bible follows the **Vulgate/Septuagint (LXX) numbering** for the Psalms, which differs from the Hebrew/Protestant numbering used in most modern Bibles:
+| Source | Coverage | Entries |
+|--------|----------|---------|
+| **Haydock** (Rev. George Leo Haydock, 1859) | Full Bible | 35,000+ |
+| **Cornelius à Lapide** (English NT) | Gospels, Epistles | 2,400+ |
+| **1609 Douai Annotations** | Partial (original Douai notes) | 3,100+ |
 
-| Vulgate/LXX (DRB) | Hebrew/Protestant (KJV, ESV, etc.) |
-|--------------------|-------------------------------------|
-| Psalms 1–8         | Psalms 1–8                          |
-| Psalms 9           | Psalms 9–10                         |
-| Psalms 10–112      | Psalms 11–113                       |
-| Psalms 113         | Psalms 114–115                      |
-| Psalms 114–115     | Psalms 116                          |
-| Psalms 116–145     | Psalms 117–146                      |
-| Psalms 146–147     | Psalms 147                          |
-| Psalms 148–150     | Psalms 148–150                      |
+Currently `-c` displays the Haydock commentary. Lapide and Douai 1609 support is in progress.
 
-So if you're looking for "The Lord is my shepherd" (Protestant Psalm 23), you want:
+All commentary texts are public domain (pre-1928).
+
+## ⚠️ Psalm Numbering
+
+The Douay-Rheims follows **Vulgate/Septuagint numbering**, which differs from the Hebrew numbering in most Protestant Bibles. For example, "The Lord is my shepherd" (Protestant Psalm 23) is:
 
 ```
 $ drb Psalms 22
 ```
 
-## Books
-
-All 73 books in Douay-Rheims/Vulgate order, including:
-
-- **Deuterocanonical books:** Tobit, Judith, Wisdom, Sirach (Ecclesiasticus), Baruch, 1 & 2 Maccabees
-- **Extended versions** of Esther and Daniel
-
-Run `drb -l` to see all books with their abbreviations.
+Run `drb -l` to see all 73 books with their abbreviations.
 
 ## Environment Variables
 
@@ -204,19 +163,16 @@ Part of the command-line Bible ecosystem:
 
 | Tool | Translation | Language | Books |
 |------|------------|----------|-------|
-| **[drb](https://github.com/CodeBlue519/drb)** | Douay-Rheims (Challoner) | English | 73 (Catholic canon) |
+| **[drb](https://github.com/ecclesia-dev/drb)** | Douay-Rheims (Challoner) | English | 73 (Catholic canon) |
 | **[kjv](https://github.com/LukeSmithxyz/kjv)** | King James Version | English | 66 + Apocrypha |
 | **[vul](https://github.com/LukeSmithxyz/vul)** | Latin Vulgate | Latin | 73 |
 | **[grb](https://github.com/LukeSmithxyz/grb)** | Septuagint / SBL Greek | Greek | 66 + Apocrypha |
 
-All four use the same interface. Install them together for the complete polyglot Catholic Bible toolkit:
+All four use the same interface:
 
 ```sh
-# Compare translations
+# Compare translations side by side
 paste <(drb John 1:1 | cut -f2) <(vul John 1:1 | cut -f2)
-
-# Search across Bibles
-for bible in drb vul kjv; do echo "=== $bible ==="; $bible /grace | head -3; done
 ```
 
 *Ad Maiorem Dei Gloriam.*
