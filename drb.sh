@@ -71,16 +71,28 @@ while [ $# -gt 0 ]; do
 	elif [ "$1" = "-c" ]; then
 		shift
 		case "$1" in
-			haydock|lapide)
-				export DRB_COMMENTARY="$1"
+			haydock|lapide|all)
+				if [ -z "$DRB_COMMENTARY" ]; then
+					export DRB_COMMENTARY="$1"
+				else
+					export DRB_COMMENTARY="${DRB_COMMENTARY},$1"
+				fi
 				shift
 				;;
 			-*|"")
-				export DRB_COMMENTARY="haydock"
+				if [ -z "$DRB_COMMENTARY" ]; then
+					export DRB_COMMENTARY="haydock"
+				else
+					export DRB_COMMENTARY="${DRB_COMMENTARY},haydock"
+				fi
 				;;
 			*)
 				# Not a known source, might be a book reference — default to haydock
-				export DRB_COMMENTARY="haydock"
+				if [ -z "$DRB_COMMENTARY" ]; then
+					export DRB_COMMENTARY="haydock"
+				else
+					export DRB_COMMENTARY="${DRB_COMMENTARY},haydock"
+				fi
 				;;
 		esac
 	elif [ "$1" = "-W" ]; then
@@ -125,35 +137,57 @@ if [ -n "${DRB_COMMENTARY}" ]; then
 		esac
 	}
 
-	commentary_src="${DRB_COMMENTARY}"
-	case "$commentary_src" in
-		haydock) label="Haydock Commentary" ; tsv="haydock.tsv" ;;
-		lapide)  label="Cornelius à Lapide"  ; tsv="lapide.tsv" ;;
-		*)       label="Haydock Commentary" ; tsv="haydock.tsv" ;;
+	# Expand "all" and build source list
+	sources=""
+	case "${DRB_COMMENTARY}" in
+		*all*) sources="haydock lapide" ;;
+		*)
+			IFS=','
+			for s in ${DRB_COMMENTARY}; do
+				case "$s" in
+					haydock|lapide) sources="$sources $s" ;;
+				esac
+			done
+			unset IFS
+			;;
 	esac
 
-	echo ""
-	echo "--- ${label} ---"
-	echo ""
-	get_data drb.tsv | awk -v cmd=ref -v ref="$*" "$(get_data drb.awk)" | \
-	sed -n 's/^\([A-Za-z0-9 ]*\)$/BOOK:\1/p; s/^\([0-9]*:[0-9]*\)\t.*/\1/p' | \
-	while IFS= read -r line; do
-		case "$line" in
-			BOOK:*) curbook="${line#BOOK:}" ;;
-			*)
-				if [ "$commentary_src" = "lapide" ]; then
-					abbrev=$(lapide_abbrev "$curbook")
-					if [ -z "$abbrev" ]; then
-						continue
-					fi
-					get_data "$tsv" | grep "^${abbrev}	${line}	" | cut -f3 | \
-					   awk -v verse="$line" 'BEGIN{printf "  %s\t", verse}{print}'
-				else
-					get_data "$tsv" | grep "^${curbook}	${line}	" | cut -f3 | \
-					   awk -v verse="$line" 'BEGIN{printf "  %s\t", verse}{print}'
-				fi
-				;;
+	# Save reference for use inside function
+	_ref="$*"
+
+	show_commentary() {
+		_src="$1"
+		case "$_src" in
+			haydock) _label="Haydock Commentary" ; _tsv="haydock.tsv" ;;
+			lapide)  _label="Cornelius à Lapide"  ; _tsv="lapide.tsv" ;;
 		esac
+		echo ""
+		echo "--- ${_label} ---"
+		echo ""
+		get_data drb.tsv | awk -v cmd=ref -v ref="$_ref" "$(get_data drb.awk)" | \
+		sed -n 's/^\([A-Za-z0-9 ]*\)$/BOOK:\1/p; s/^\([0-9]*:[0-9]*\)\t.*/\1/p' | \
+		while IFS= read -r line; do
+			case "$line" in
+				BOOK:*) curbook="${line#BOOK:}" ;;
+				*)
+					if [ "$_src" = "lapide" ]; then
+						abbrev=$(lapide_abbrev "$curbook")
+						if [ -z "$abbrev" ]; then
+							continue
+						fi
+						get_data "$_tsv" | grep "^${abbrev}	${line}	" | cut -f3 | \
+						   awk -v verse="$line" 'BEGIN{printf "  %s\t", verse}{print}'
+					else
+						get_data "$_tsv" | grep "^${curbook}	${line}	" | cut -f3 | \
+						   awk -v verse="$line" 'BEGIN{printf "  %s\t", verse}{print}'
+					fi
+					;;
+			esac
+		done
+	}
+
+	for src in $sources; do
+		show_commentary "$src"
 	done
 fi
 ) | ${PAGER}

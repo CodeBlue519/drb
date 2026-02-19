@@ -72,9 +72,10 @@ $ drb John 1:1-2:5             # cross-chapter range
 Use `-c` to display commentary below each verse. Defaults to Haydock:
 
 ```
-$ drb -c John 1:1           # Haydock (default)
-$ drb -c haydock John 1:1   # Haydock (explicit)
-$ drb -c lapide Matthew 1:2 # Cornelius à Lapide
+$ drb -c John 1:1              # Haydock (default)
+$ drb -c lapide Matthew 1:2    # Cornelius à Lapide
+$ drb -c -c lapide John 1:1   # both Haydock and Lapide
+$ drb -c all Matthew 1:2       # all available commentaries
 ```
 
 **Haydock** covers the entire Bible (35,000+ entries) — Church Fathers, Doctors of the Church, traditional Catholic exegesis.
