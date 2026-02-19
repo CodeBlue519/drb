@@ -10,3 +10,7 @@ drb
 *~
 .vscode/
 .idea/
+__pycache__/
+lapide-cache/
+*.log
+*.pyc
