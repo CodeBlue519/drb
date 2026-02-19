@@ -69,19 +69,17 @@ $ drb John 1:1-2:5             # cross-chapter range
 
 ### Commentary
 
-Use `-c` to display the Haydock Catholic Bible Commentary below each verse:
+Use `-c` to display commentary below each verse. Defaults to Haydock:
 
 ```
-$ drb -c John 1:1
-John
-1:1     In the beginning was the Word: and the Word was with God: and the Word
-        was God.
-
-        Commentary: Ver. 1. In the beginning. Before all ages: the same as
-        saying from all eternity... (Haydock)
+$ drb -c John 1:1           # Haydock (default)
+$ drb -c haydock John 1:1   # Haydock (explicit)
+$ drb -c lapide Matthew 1:2 # Cornelius à Lapide
 ```
 
-The Haydock commentary covers the entire Bible (Genesis through 2 Maccabees) with over 35,000 entries drawn from the Church Fathers, Doctors of the Church, and traditional Catholic exegesis.
+**Haydock** covers the entire Bible (35,000+ entries) — Church Fathers, Doctors of the Church, traditional Catholic exegesis.
+
+**Cornelius à Lapide** covers the New Testament (2,400+ entries) — Gospels, 1-2 Corinthians, Galatians, 1 John. Dense, scholarly commentary from the 17th century Jesuit exegete.
 
 ### Random verse
 
@@ -135,7 +133,7 @@ drb> Wisdom 7
 | **Cornelius à Lapide** (English NT) | Gospels, Epistles | 2,400+ |
 | **1609 Douai Annotations** | Partial (original Douai notes) | 3,100+ |
 
-Currently `-c` displays the Haydock commentary. Lapide and Douai 1609 support is in progress.
+Use `-c haydock` or `-c lapide` to select. Douai 1609 annotation support is in progress.
 
 All commentary texts are public domain (pre-1928).
 

@@ -20,11 +20,12 @@ show_help() {
 	exec >&2
 	echo "usage: $(basename "$0") [flags] [reference...]"
 	echo
-	echo "  -l      list books"
-	echo "  -r      random verse"
-	echo "  -c      show commentary (Haydock)"
-	echo "  -W      no line wrap"
-	echo "  -h      show help"
+	echo "  -l              list books"
+	echo "  -r              random verse"
+	echo "  -c [SOURCE]     show commentary (default: haydock)"
+	echo "                  sources: haydock, lapide"
+	echo "  -W              no line wrap"
+	echo "  -h              show help"
 	echo
 	echo "  Reference types:"
 	echo "      <Book>"
@@ -68,8 +69,20 @@ while [ $# -gt 0 ]; do
 		get_data drb.tsv | awk -v cmd=random -v line="$line" "$(get_data drb.awk)"
 		exit
 	elif [ "$1" = "-c" ]; then
-		export DRB_COMMENTARY=1
 		shift
+		case "$1" in
+			haydock|lapide)
+				export DRB_COMMENTARY="$1"
+				shift
+				;;
+			-*|"")
+				export DRB_COMMENTARY="haydock"
+				;;
+			*)
+				# Not a known source, might be a book reference — default to haydock
+				export DRB_COMMENTARY="haydock"
+				;;
+		esac
 	elif [ "$1" = "-W" ]; then
 		export DRB_NOLINEWRAP=1
 		shift
@@ -101,22 +114,45 @@ fi
 
 (
 get_data drb.tsv | awk -v cmd=ref -v ref="$*" "$(get_data drb.awk)"
-if [ "${DRB_COMMENTARY:-0}" = "1" ]; then
-	# Extract book and chapter:verse from the reference for commentary lookup
-	get_data drb.tsv | awk -v cmd=ref -v ref="$*" '
-	'"$(get_data drb.awk)"'
-	' | while IFS= read -r line; do true; done
-	# Simpler: grep commentary by matching verses that were displayed
+if [ -n "${DRB_COMMENTARY}" ]; then
+	# Map full book names to Lapide abbreviations
+	lapide_abbrev() {
+		case "$1" in
+			Matthew) echo "Mt" ;; Mark) echo "Mk" ;; Luke) echo "Lk" ;;
+			John) echo "Jn" ;; "1 Corinthians") echo "1Cor" ;;
+			"2 Corinthians") echo "2Cor" ;; Galatians) echo "Gal" ;;
+			"1 John") echo "1Jn" ;; *) echo "" ;;
+		esac
+	}
+
+	commentary_src="${DRB_COMMENTARY}"
+	case "$commentary_src" in
+		haydock) label="Haydock Commentary" ; tsv="haydock.tsv" ;;
+		lapide)  label="Cornelius à Lapide"  ; tsv="lapide.tsv" ;;
+		*)       label="Haydock Commentary" ; tsv="haydock.tsv" ;;
+	esac
+
 	echo ""
-	echo "--- Haydock Commentary ---"
+	echo "--- ${label} ---"
 	echo ""
 	get_data drb.tsv | awk -v cmd=ref -v ref="$*" "$(get_data drb.awk)" | \
 	sed -n 's/^\([A-Za-z0-9 ]*\)$/BOOK:\1/p; s/^\([0-9]*:[0-9]*\)\t.*/\1/p' | \
 	while IFS= read -r line; do
 		case "$line" in
 			BOOK:*) curbook="${line#BOOK:}" ;;
-			*) get_data haydock.tsv | grep "^${curbook}	${line}	" | cut -f3 | \
-			   awk -v verse="$line" 'BEGIN{printf "  %s\t", verse}{print}' ;;
+			*)
+				if [ "$commentary_src" = "lapide" ]; then
+					abbrev=$(lapide_abbrev "$curbook")
+					if [ -z "$abbrev" ]; then
+						continue
+					fi
+					get_data "$tsv" | grep "^${abbrev}	${line}	" | cut -f3 | \
+					   awk -v verse="$line" 'BEGIN{printf "  %s\t", verse}{print}'
+				else
+					get_data "$tsv" | grep "^${curbook}	${line}	" | cut -f3 | \
+					   awk -v verse="$line" 'BEGIN{printf "  %s\t", verse}{print}'
+				fi
+				;;
 		esac
 	done
 fi
