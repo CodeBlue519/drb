@@ -22,6 +22,7 @@ show_help() {
 	echo
 	echo "  -l      list books"
 	echo "  -r      random verse"
+	echo "  -c      show commentary (Haydock)"
 	echo "  -W      no line wrap"
 	echo "  -h      show help"
 	echo
@@ -66,6 +67,9 @@ while [ $# -gt 0 ]; do
 		line=$(awk 'BEGIN{srand(); print int(rand()*'"$total"')+1}')
 		get_data drb.tsv | awk -v cmd=random -v line="$line" "$(get_data drb.awk)"
 		exit
+	elif [ "$1" = "-c" ]; then
+		export DRB_COMMENTARY=1
+		shift
 	elif [ "$1" = "-W" ]; then
 		export DRB_NOLINEWRAP=1
 		shift
@@ -95,4 +99,25 @@ if [ $# -eq 0 ]; then
 	exit 0
 fi
 
-get_data drb.tsv | awk -v cmd=ref -v ref="$*" "$(get_data drb.awk)" | ${PAGER}
+(
+get_data drb.tsv | awk -v cmd=ref -v ref="$*" "$(get_data drb.awk)"
+if [ "${DRB_COMMENTARY:-0}" = "1" ]; then
+	# Extract book and chapter:verse from the reference for commentary lookup
+	get_data drb.tsv | awk -v cmd=ref -v ref="$*" '
+	'"$(get_data drb.awk)"'
+	' | while IFS= read -r line; do true; done
+	# Simpler: grep commentary by matching verses that were displayed
+	echo ""
+	echo "--- Haydock Commentary ---"
+	echo ""
+	get_data drb.tsv | awk -v cmd=ref -v ref="$*" "$(get_data drb.awk)" | \
+	sed -n 's/^\([A-Za-z0-9 ]*\)$/BOOK:\1/p; s/^\([0-9]*:[0-9]*\)\t.*/\1/p' | \
+	while IFS= read -r line; do
+		case "$line" in
+			BOOK:*) curbook="${line#BOOK:}" ;;
+			*) get_data haydock.tsv | grep "^${curbook}	${line}	" | cut -f3 | \
+			   awk -v verse="$line" 'BEGIN{printf "  %s\t", verse}{print}' ;;
+		esac
+	done
+fi
+) | ${PAGER}

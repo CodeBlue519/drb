@@ -1,10 +1,10 @@
 PREFIX = /usr/local
 
-drb: drb.sh drb.awk drb.tsv
+drb: drb.sh drb.awk drb.tsv haydock.tsv
 	cat drb.sh > $@
 	echo 'exit 0' >> $@
 	echo '#EOF' >> $@
-	tar czf - drb.awk drb.tsv >> $@
+	tar czf - drb.awk drb.tsv haydock.tsv >> $@
 	chmod +x $@
 
 test: drb.sh
