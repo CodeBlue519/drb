@@ -30,7 +30,7 @@ John
 ### From source
 
 ```sh
-git clone https://github.com/yourusername/drb.git
+git clone https://github.com/CodeBlue519/drb.git
 cd drb
 make
 sudo make install
@@ -58,8 +58,17 @@ yay -S drb
 drb [flags] [reference...]
 
   -l      list books
+  -r      random verse
   -W      no line wrap
   -h      show help
+```
+
+### Random verse
+
+```
+$ drb -r
+Sirach
+40:17   Grace is like a paradise in blessings, and mercy remaineth for ever.
 ```
 
 ### Single verse
@@ -188,6 +197,27 @@ Run `drb -l` to see all books with their abbreviations.
 | `PAGER` | Pager program | `less` |
 | `DRB_NOLINEWRAP` | Disable line wrapping | unset |
 | `DRB_MAX_WIDTH` | Maximum line width | terminal width |
+
+## Related Projects
+
+Part of the command-line Bible ecosystem:
+
+| Tool | Translation | Language | Books |
+|------|------------|----------|-------|
+| **[drb](https://github.com/CodeBlue519/drb)** | Douay-Rheims (Challoner) | English | 73 (Catholic canon) |
+| **[kjv](https://github.com/LukeSmithxyz/kjv)** | King James Version | English | 66 + Apocrypha |
+| **[vul](https://github.com/LukeSmithxyz/vul)** | Latin Vulgate | Latin | 73 |
+| **[grb](https://github.com/LukeSmithxyz/grb)** | Septuagint / SBL Greek | Greek | 66 + Apocrypha |
+
+All four use the same interface. Install them together for the complete polyglot Catholic Bible toolkit:
+
+```sh
+# Compare translations
+paste <(drb John 1:1 | cut -f2) <(vul John 1:1 | cut -f2)
+
+# Search across Bibles
+for bible in drb vul kjv; do echo "=== $bible ==="; $bible /grace | head -3; done
+```
 
 ## Source Text
 

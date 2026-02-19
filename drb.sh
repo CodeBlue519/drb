@@ -21,6 +21,7 @@ show_help() {
 	echo "usage: $(basename "$0") [flags] [reference...]"
 	echo
 	echo "  -l      list books"
+	echo "  -r      random verse"
 	echo "  -W      no line wrap"
 	echo "  -h      show help"
 	echo
@@ -59,6 +60,11 @@ while [ $# -gt 0 ]; do
 		break
 	elif [ "$1" = "-l" ]; then
 		get_data drb.tsv | awk -v cmd=list "$(get_data drb.awk)"
+		exit
+	elif [ "$1" = "-r" ]; then
+		total=$(get_data drb.tsv | wc -l)
+		line=$(awk 'BEGIN{srand(); print int(rand()*'"$total"')+1}')
+		get_data drb.tsv | awk -v cmd=random -v line="$line" "$(get_data drb.awk)"
 		exit
 	elif [ "$1" = "-W" ]; then
 		export DRB_NOLINEWRAP=1

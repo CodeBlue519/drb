@@ -14,6 +14,10 @@ BEGIN {
 	}
 }
 
+cmd == "random" && NR == line {
+	processline()
+}
+
 cmd == "list" {
 	if (!($2 in seen_books)) {
 		printf("%s (%s)\n", $1, $2)
