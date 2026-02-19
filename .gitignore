@@ -14,3 +14,6 @@ __pycache__/
 lapide-cache/
 *.log
 *.pyc
+haydock-progress.json
+scrape-haydock.py
+scrape-lapide.py
