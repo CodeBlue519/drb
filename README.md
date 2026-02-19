@@ -219,18 +219,4 @@ paste <(drb John 1:1 | cut -f2) <(vul John 1:1 | cut -f2)
 for bible in drb vul kjv; do echo "=== $bible ==="; $bible /grace | head -3; done
 ```
 
-## Source Text
-
-The Douay-Rheims text (Challoner revision) is sourced from public domain transcriptions of the 1899 edition. More information: [Douay-Rheims Bible Online](https://www.drbo.org/).
-
-## License
-
-Public domain ([Unlicense](LICENSE)). The Douay-Rheims Bible text is itself in the public domain.
-
-## Support
-
-If this tool is useful to you, consider a lightning donation:
-
-⚡ `your-lightning-address@example.com`
-
 *Ad Maiorem Dei Gloriam.*
