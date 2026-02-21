@@ -1,3 +1,9 @@
+# Security
+.env
+.secrets/
+*.key
+*.pem
+
 # Build output
 drb
 
