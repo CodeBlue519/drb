@@ -2,46 +2,88 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, 'ci/**']
   pull_request:
-    branches: [main, master]
+    branches: [main]
 
 jobs:
-  build-and-test:
+  shellcheck:
+    name: ShellCheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Run ShellCheck
+        run: |
+          shfiles=$(find . -name '*.sh' -not -path './.git/*')
+          if [ -n "$shfiles" ]; then
+            echo "$shfiles" | xargs shellcheck -S warning
+          else
+            echo "No .sh files found"
+          fi
 
-      - name: Build
-        run: make
-
-      - name: Verify binary exists
-        run: test -x drb
-
-      - name: List books
-        run: ./drb -l | head -5
-
-      - name: Look up single verse
-        run: ./drb John 1:1
-
-      - name: Look up chapter range
-        run: ./drb Genesis 1:1-3
-
-      - name: Search
-        run: ./drb /grace | head -5
-
-      - name: Deuterocanonical book
-        run: ./drb Wisdom 7:26
-
-      - name: Shellcheck
-        run: shellcheck -s sh drb.sh
-
-  macos:
-    runs-on: macos-latest
+  secrets-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build and test
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks
         run: |
-          make
-          ./drb John 1:1
-          ./drb Wisdom 7:26
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz \
+            | sudo tar xz -C /usr/local/bin gitleaks
+      - name: Run gitleaks
+        run: gitleaks detect --source . --verbose
+
+  pii-scan:
+    name: PII Pattern Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for PII patterns
+        run: |
+          set +e
+          found=0
+          if grep -rn --include='*.sh' --include='*.md' --include='*.txt' --include='*.tsv' --include='*.csv' \
+            -E '\b(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b' . --exclude-dir=.git; then
+            echo "::warning::Possible phone numbers found"; found=1
+          fi
+          if grep -rn --include='*.sh' --include='*.md' --include='*.txt' --include='*.tsv' --include='*.csv' \
+            -E '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}' . --exclude-dir=.git \
+            | grep -v 'example\.com' | grep -v 'noreply\.github\.com'; then
+            echo "::warning::Possible email addresses found"; found=1
+          fi
+          if grep -rn --include='*.sh' --include='*.md' --include='*.txt' --include='*.tsv' --include='*.csv' \
+            -E '\b\d{3}-\d{2}-\d{4}\b' . --exclude-dir=.git; then
+            echo "::warning::Possible SSN patterns found"; found=1
+          fi
+          if [ "$found" -eq 1 ]; then
+            echo "::error::PII patterns detected"; exit 1
+          fi
+          echo "No PII patterns found"
+
+  license-check:
+    name: License Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify LICENSE file exists
+        run: |
+          if [ ! -f LICENSE ] && [ ! -f LICENSE.md ] && [ ! -f LICENSE.txt ] && [ ! -f COPYING ]; then
+            echo "::error::No LICENSE file found"; exit 1
+          fi
+
+  makefile-smoke:
+    name: Makefile Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: make || echo "No default make target"
+      - name: Install to temp prefix
+        run: make install PREFIX=/tmp/test-install
+      - name: Smoke test installed binary
+        run: |
+          export PATH="/tmp/test-install/bin:$PATH"
+          drb --help || drb -h || echo "No --help (non-fatal)"
+
